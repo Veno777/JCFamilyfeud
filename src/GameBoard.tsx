@@ -300,13 +300,251 @@ export default function GameBoard() {
     );
   }
 
-  // Continue with the rest of your original code (the transition screen and main board)
-  // ... Paste the rest of your original code from here down (the big return statement)
+  // ─── Transition screen ───────────────────────────────────────────
+  if (state.showTransition) {
+    return (
+      <div className="ff-board">
+        {editingTeam && (
+          <div className="ff-modal-overlay" onClick={() => setEditingTeam(null)}>
+            <div className="ff-modal ff-modal-sm" onClick={(e) => e.stopPropagation()}>
+              <h2 className="ff-modal-title">Edit Team Name</h2>
+              <input
+                className="ff-name-input"
+                value={teamNameInput}
+                onChange={(e) => setTeamNameInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveTeamName()}
+                autoFocus
+                maxLength={20}
+              />
+              <div className="ff-modal-actions">
+                <button className="ff-btn ff-btn-primary" onClick={saveTeamName}>Save</button>
+                <button className="ff-btn ff-btn-secondary" onClick={() => setEditingTeam(null)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
 
+        <header className="ff-header">
+          <div className={`ff-header-team ${state.activeTeam === 1 ? "ff-header-team-active" : ""}`} onClick={() => startEditTeam(1)}>
+            <span className="ff-header-team-name">{state.team1.name} ✎</span>
+            <span className="ff-header-team-score">{state.team1.score}</span>
+          </div>
+          <div className="ff-header-center">
+            <button className="ff-pill ff-pill-danger" onClick={resetAll}>Reset</button>
+          </div>
+          <div className={`ff-header-team ff-header-team-right ${state.activeTeam === 2 ? "ff-header-team-active" : ""}`} onClick={() => startEditTeam(2)}>
+            <span className="ff-header-team-name">{state.team2.name} ✎</span>
+            <span className="ff-header-team-score">{state.team2.score}</span>
+          </div>
+        </header>
+
+        <div className="ff-transition">
+          <div className="ff-transition-inner">
+            <p className="ff-transition-category">{category.name}</p>
+            <h1 className="ff-transition-title" data-half={isRound3}>
+              {isRound3 ? (
+                <>
+                  ROUND 3
+                  <span className="ff-transition-subtitle">1.5X POINTS</span>
+                </>
+              ) : (
+                `ROUND ${state.roundIdx + 1}`
+              )}
+            </h1>
+            <button className="ff-btn ff-btn-start" onClick={startRound}>
+              START ROUND
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Main Game Board ─────────────────────────────────────────────
   return (
     <div className="ff-board">
-      {/* Your existing main return JSX goes here - keep it exactly as you had it */}
-      {/* I stopped here to save space. Paste your original main return code below this line */}
+      {/* Category picker modal */}
+      {showCategoryPicker && (
+        <div className="ff-modal-overlay" onClick={() => setShowCategoryPicker(false)}>
+          <div className="ff-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="ff-modal-title">Select Category</h2>
+            <div className="ff-category-list">
+              {gameData.map((cat, i) => (
+                <button
+                  key={i}
+                  className={`ff-category-btn ${i === state.categoryIdx ? "active" : ""}`}
+                  onClick={() => switchCategory(i)}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+            <button className="ff-btn ff-btn-secondary" onClick={() => setShowCategoryPicker(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Team name editor */}
+      {editingTeam && (
+        <div className="ff-modal-overlay" onClick={() => setEditingTeam(null)}>
+          <div className="ff-modal ff-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <h2 className="ff-modal-title">Edit Team Name</h2>
+            <input
+              className="ff-name-input"
+              value={teamNameInput}
+              onChange={(e) => setTeamNameInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveTeamName()}
+              autoFocus
+              maxLength={20}
+            />
+            <div className="ff-modal-actions">
+              <button className="ff-btn ff-btn-primary" onClick={saveTeamName}>Save</button>
+              <button className="ff-btn ff-btn-secondary" onClick={() => setEditingTeam(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {lastAction && <div className="ff-toast">{lastAction}</div>}
+
+      {/* Header */}
+      <header className="ff-header">
+        <div className={`ff-header-team ${state.activeTeam === 1 ? "ff-header-team-active" : ""}`} onClick={() => startEditTeam(1)} title="Click to rename">
+          <span className="ff-header-team-name">{state.team1.name} ✎</span>
+          <span className="ff-header-team-score">{state.team1.score}</span>
+        </div>
+        <div className="ff-header-center">
+          <button className="ff-pill" onClick={() => setShowCategoryPicker(true)}>
+            {category.name} ▾
+          </button>
+          <div className="ff-header-meta">
+            <span className="ff-game-label">Game {state.gameIdx + 1} of {category.games.length}</span>
+            <span className="ff-round-badge" data-half={isRound3}>
+              {isRound3 ? (
+                <>Round 3 <span className="ff-half-tag">1.5X</span></>
+              ) : (
+                `Round ${state.roundIdx + 1}`
+              )}
+            </span>
+          </div>
+          <button className="ff-pill ff-pill-danger" onClick={resetAll}>Reset</button>
+        </div>
+        <div className={`ff-header-team ff-header-team-right ${state.activeTeam === 2 ? "ff-header-team-active" : ""}`} onClick={() => startEditTeam(2)} title="Click to rename">
+          <span className="ff-header-team-name">{state.team2.name} ✎</span>
+          <span className="ff-header-team-score">{state.team2.score}</span>
+        </div>
+      </header>
+
+      {/* Question */}
+      <section className="ff-question-section">
+        <p className="ff-question">{round.question}</p>
+      </section>
+
+      {/* Answers */}
+      <section className="ff-answers-section">
+        <div className="ff-answers-grid" data-count={round.answers.length}>
+          {round.answers.map((ans, i) => {
+            const isRevealed = !!state.revealed[i];
+            const isEmpty = ans === null;
+            const isStealClickable = state.stealMode && !state.stealDone && ans && !isRevealed;
+            const isDisabled = isEmpty || isRevealed || (state.roundLocked && !state.stealMode);
+
+            return (
+              <button
+                key={i}
+                className={`ff-answer-slot ${isEmpty ? "ff-answer-empty" : ""} ${
+                  isRevealed ? "ff-answer-revealed" : "ff-answer-hidden"
+                } ${isDisabled ? "ff-answer-disabled" : ""} ${
+                  isStealClickable ? "ff-answer-steal-target" : ""
+                }`}
+                onClick={() => revealAnswer(i)}
+                disabled={!!isDisabled}
+              >
+                <span className="ff-answer-num">{i + 1}</span>
+                {isRevealed && ans && (
+                  <>
+                    <span className="ff-answer-text">{ans.text}</span>
+                    <span className="ff-answer-pts">{ans.points}</span>
+                  </>
+                )}
+                {!isRevealed && isEmpty && <span className="ff-answer-placeholder">—</span>}
+                {isStealClickable && <span className="ff-steal-hint">STEAL?</span>}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Controls */}
+      <section className="ff-controls">
+        <div className="ff-strikes-row">
+          <span className="ff-strikes-label">Strikes</span>
+          <div className="ff-strikes">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={`ff-strike-box ${i < state.strikes ? "ff-strike-active" : ""}`}>
+                {i < state.strikes ? "✕" : ""}
+              </div>
+            ))}
+          </div>
+          {state.roundLocked && (
+            <div className="ff-round-total">
+              Round Total: <strong>{state.roundTotalAtLock} pts</strong>
+              {state.stealMode && (
+                <span className="ff-steal-pct"> → Transfer = {Math.round(state.roundTotalAtLock * 0.6)} pts</span>
+              )}
+            </div>
+          )}
+          <span className="ff-round-label-small">{roundLabel}</span>
+        </div>
+
+        <div className="ff-btn-row">
+          <button className="ff-btn ff-btn-strike" onClick={addStrike} disabled={state.strikes >= 3 || state.roundLocked}>
+            + Strike
+          </button>
+          <button className="ff-btn ff-btn-end" onClick={endRound} disabled={state.roundLocked}>
+            END ROUND
+          </button>
+          {canSteal && !state.stealMode && (
+            <button className="ff-btn ff-btn-steal" onClick={triggerSteal}>
+              STEAL MODE
+            </button>
+          )}
+        </div>
+
+        {state.stealMode && !state.stealDone && (
+          <div className="ff-steal-row">
+            <span className="ff-steal-label">
+              {stealingTeamName} is guessing — click their answer above, or:
+            </span>
+            <button className="ff-btn ff-btn-wrong" onClick={stealWrong}>
+              Wrong — Add Strike
+            </button>
+          </div>
+        )}
+
+        <div className="ff-bottom-row">
+          <div className="ff-btn-row">
+            <button className="ff-btn ff-btn-nav" onClick={nextRound} disabled={state.roundIdx >= maxRound || !state.roundLocked}>
+              Next Round →
+            </button>
+            <button className="ff-btn ff-btn-nav" onClick={nextGame} disabled={state.gameIdx >= maxGame}>
+              Next Game →→
+            </button>
+          </div>
+          <div className="ff-team-switcher">
+            <span className="ff-team-switcher-label">Active Team:</span>
+            <button className={`ff-team-btn ${state.activeTeam === 1 ? "ff-team-btn-active" : ""}`} onClick={() => setState((s) => ({ ...s, activeTeam: 1 }))}>
+              {state.team1.name}
+            </button>
+            <button className={`ff-team-btn ${state.activeTeam === 2 ? "ff-team-btn-active" : ""}`} onClick={() => setState((s) => ({ ...s, activeTeam: 2 }))}>
+              {state.team2.name}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
